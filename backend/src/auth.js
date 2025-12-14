@@ -53,36 +53,41 @@ export async function checkUserAccess(user) {
   return { authorized: true, member };
 }
 
+const AUTH_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+// Check authorization with session cache
+export async function checkUserAccessWithCache(req) {
+  // Use cached authorization if available and not expired
+  if (req.session.authCache &&
+      Date.now() - req.session.authCache.timestamp < AUTH_CACHE_EXPIRY) {
+    return req.session.authCache;
+  }
+
+  const access = await checkUserAccess(req.user);
+
+  // Cache the result
+  req.session.authCache = {
+    authorized: access.authorized,
+    error: access.error || null,
+    member: access.member || null,
+    timestamp: Date.now()
+  };
+
+  return req.session.authCache;
+}
+
 // Middleware to check authorization
 export async function requireAuthorization(req, res, next) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: 'Not authenticated', code: 'NOT_AUTHENTICATED' });
   }
 
-  // Use cached authorization if available and not expired (cache for 5 minutes)
-  const cacheExpiry = 5 * 60 * 1000;
-  if (req.session.authCache &&
-      req.session.authCache.authorized &&
-      Date.now() - req.session.authCache.timestamp < cacheExpiry) {
-    req.memberInfo = req.session.authCache.member;
-    return next();
+  const cached = await checkUserAccessWithCache(req);
+  if (!cached.authorized) {
+    return res.status(403).json({ error: 'Access denied', code: cached.error });
   }
 
-  const access = await checkUserAccess(req.user);
-  if (!access.authorized) {
-    // Clear cache on authorization failure
-    req.session.authCache = null;
-    return res.status(403).json({ error: 'Access denied', code: access.error });
-  }
-
-  // Cache the authorization result
-  req.session.authCache = {
-    authorized: true,
-    member: access.member,
-    timestamp: Date.now()
-  };
-
-  req.memberInfo = access.member;
+  req.memberInfo = cached.member;
   next();
 }
 

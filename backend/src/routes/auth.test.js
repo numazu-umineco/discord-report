@@ -22,10 +22,10 @@ vi.mock('../auth.js', () => ({
     session: () => (req, res, next) => next(),
     authenticate: vi.fn(() => (req, res, next) => next())
   },
-  checkUserAccess: vi.fn()
+  checkUserAccessWithCache: vi.fn()
 }));
 
-import { checkUserAccess } from '../auth.js';
+import { checkUserAccessWithCache } from '../auth.js';
 
 function createTestApp(user = null) {
   const app = express();
@@ -72,7 +72,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return authenticated: true and authorized: true for authorized user', async () => {
-      checkUserAccess.mockResolvedValue({ authorized: true });
+      checkUserAccessWithCache.mockResolvedValue({ authorized: true, error: null });
 
       const app = createTestApp(mockUser);
       const res = await request(app).get('/auth/status');
@@ -84,7 +84,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return authorized: false with error for unauthorized user', async () => {
-      checkUserAccess.mockResolvedValue({
+      checkUserAccessWithCache.mockResolvedValue({
         authorized: false,
         error: 'NOT_IN_GUILD'
       });
@@ -99,7 +99,7 @@ describe('Auth Routes', () => {
     });
 
     it('should not expose tokens or guilds in response', async () => {
-      checkUserAccess.mockResolvedValue({ authorized: true });
+      checkUserAccessWithCache.mockResolvedValue({ authorized: true, error: null });
 
       const app = createTestApp(mockUser);
       const res = await request(app).get('/auth/status');

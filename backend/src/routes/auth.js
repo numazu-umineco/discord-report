@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { passport, checkUserAccess } from '../auth.js';
+import { passport, checkUserAccessWithCache } from '../auth.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -11,12 +11,12 @@ router.get('/status', async (req, res) => {
   }
 
   const { accessToken, refreshToken, guilds, ...safeUser } = req.user;
-  const access = await checkUserAccess(req.user);
+  const cached = await checkUserAccessWithCache(req);
 
   res.json({
     authenticated: true,
-    authorized: access.authorized,
-    error: access.error || null,
+    authorized: cached.authorized,
+    error: cached.error,
     user: safeUser
   });
 });
