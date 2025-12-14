@@ -59,10 +59,28 @@ export async function requireAuthorization(req, res, next) {
     return res.status(401).json({ error: 'Not authenticated', code: 'NOT_AUTHENTICATED' });
   }
 
+  // Use cached authorization if available and not expired (cache for 5 minutes)
+  const cacheExpiry = 5 * 60 * 1000;
+  if (req.session.authCache &&
+      req.session.authCache.authorized &&
+      Date.now() - req.session.authCache.timestamp < cacheExpiry) {
+    req.memberInfo = req.session.authCache.member;
+    return next();
+  }
+
   const access = await checkUserAccess(req.user);
   if (!access.authorized) {
+    // Clear cache on authorization failure
+    req.session.authCache = null;
     return res.status(403).json({ error: 'Access denied', code: access.error });
   }
+
+  // Cache the authorization result
+  req.session.authCache = {
+    authorized: true,
+    member: access.member,
+    timestamp: Date.now()
+  };
 
   req.memberInfo = access.member;
   next();
