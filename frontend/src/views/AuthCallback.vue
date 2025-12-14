@@ -3,11 +3,10 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const API_URL = 'http://localhost:3000'
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${API_URL}/auth/status`, {
+    const response = await fetch('/auth/status', {
       credentials: 'include'
     })
     const data = await response.json()

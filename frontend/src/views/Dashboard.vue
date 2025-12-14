@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const API_URL = 'http://localhost:3000'
 
 const user = ref(null)
 const activities = ref([])
@@ -27,8 +26,8 @@ activityDate.value = defaultDate
 onMounted(async () => {
   try {
     const [userResponse, activitiesResponse] = await Promise.all([
-      fetch(`${API_URL}/api/user`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/activities`, { credentials: 'include' })
+      fetch('/api/user', { credentials: 'include' }),
+      fetch('/api/activities', { credentials: 'include' })
     ])
 
     if (userResponse.ok && activitiesResponse.ok) {
@@ -47,7 +46,7 @@ onMounted(async () => {
 
 const logout = async () => {
   try {
-    await fetch(`${API_URL}/auth/logout`, { credentials: 'include' })
+    await fetch('/auth/logout', { credentials: 'include' })
     router.push('/')
   } catch (error) {
     console.error('Logout failed:', error)
@@ -83,7 +82,7 @@ const submitPost = async () => {
   submitResult.value = null
 
   try {
-    const response = await fetch(`${API_URL}/api/posts`, {
+    const response = await fetch('/api/posts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

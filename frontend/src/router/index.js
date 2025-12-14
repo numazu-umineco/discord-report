@@ -37,7 +37,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
     try {
-      const response = await fetch('http://localhost:3000/auth/status', {
+      const response = await fetch('/auth/status', {
         credentials: 'include'
       })
       const data = await response.json()

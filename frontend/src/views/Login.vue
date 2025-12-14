@@ -1,8 +1,6 @@
 <script setup>
-const API_URL = 'http://localhost:3000'
-
 const loginWithDiscord = () => {
-  window.location.href = `${API_URL}/auth/discord`
+  window.location.href = '/auth/discord'
 }
 </script>
 

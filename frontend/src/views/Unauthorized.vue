@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
-const API_URL = 'http://localhost:3000'
 
 const errorCode = computed(() => route.query.error || 'UNKNOWN')
 
@@ -33,7 +32,7 @@ const currentError = computed(() => {
 
 const logout = async () => {
   try {
-    await fetch(`${API_URL}/auth/logout`, { credentials: 'include' })
+    await fetch('/auth/logout', { credentials: 'include' })
   } catch (error) {
     // Ignore logout errors
   }
