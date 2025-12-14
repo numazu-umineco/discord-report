@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { requireAuthorization } from '../auth.js';
-import { config } from '../config.js';
-import { getBotGuilds, postEmbedToDiscord } from '../discord.js';
+import { postEmbedToDiscord } from '../discord.js';
 import { getActivities, getActivityById, isValidActivityId } from '../data/activities.js';
 import { createActivityReportEmbed } from '../models/embed.js';
 
@@ -10,23 +9,6 @@ const router = Router();
 router.get('/user', requireAuthorization, (req, res) => {
   const { accessToken, refreshToken, ...safeUser } = req.user;
   res.json(safeUser);
-});
-
-router.get('/guilds', requireAuthorization, async (req, res) => {
-  try {
-    const botGuilds = await getBotGuilds();
-    const botGuildIds = new Set(botGuilds.map(g => g.id));
-
-    if (botGuildIds.has(config.discord.allowedGuildId)) {
-      const allowedGuild = req.user.guilds.find(g => g.id === config.discord.allowedGuildId);
-      res.json(allowedGuild ? [allowedGuild] : []);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error fetching guilds:', error);
-    res.status(500).json({ error: 'Failed to fetch guilds' });
-  }
 });
 
 router.get('/activities', requireAuthorization, (req, res) => {

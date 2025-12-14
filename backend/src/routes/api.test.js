@@ -7,7 +7,6 @@ import apiRoutes from './api.js';
 
 // Mock discord.js
 vi.mock('../discord.js', () => ({
-  getBotGuilds: vi.fn(),
   postEmbedToDiscord: vi.fn(),
   getUserAvatarUrl: vi.fn((user) => `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`)
 }));
@@ -38,7 +37,7 @@ vi.mock('../auth.js', () => ({
   checkUserAccess: vi.fn()
 }));
 
-import { getBotGuilds, postEmbedToDiscord } from '../discord.js';
+import { postEmbedToDiscord } from '../discord.js';
 import { requireAuthorization } from '../auth.js';
 
 function createTestApp(user = null) {
@@ -97,43 +96,6 @@ describe('API Routes', () => {
       const res = await request(app).get('/api/user');
 
       expect(res.status).toBe(401);
-    });
-  });
-
-  describe('GET /api/guilds', () => {
-    it('should return allowed guild when bot is in guild', async () => {
-      getBotGuilds.mockResolvedValue([
-        { id: 'allowed-guild-123', name: 'Bot Guild' }
-      ]);
-
-      const app = createTestApp(mockUser);
-      const res = await request(app).get('/api/guilds');
-
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].id).toBe('allowed-guild-123');
-    });
-
-    it('should return empty array when bot is not in allowed guild', async () => {
-      getBotGuilds.mockResolvedValue([
-        { id: 'different-guild', name: 'Different Guild' }
-      ]);
-
-      const app = createTestApp(mockUser);
-      const res = await request(app).get('/api/guilds');
-
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual([]);
-    });
-
-    it('should return 500 on error', async () => {
-      getBotGuilds.mockRejectedValue(new Error('API error'));
-
-      const app = createTestApp(mockUser);
-      const res = await request(app).get('/api/guilds');
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Failed to fetch guilds');
     });
   });
 
