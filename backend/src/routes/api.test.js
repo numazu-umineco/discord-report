@@ -77,28 +77,6 @@ describe('API Routes', () => {
     vi.clearAllMocks();
   });
 
-  describe('GET /api/user', () => {
-    it('should return user without sensitive tokens', async () => {
-      const app = createTestApp(mockUser);
-
-      const res = await request(app).get('/api/user');
-
-      expect(res.status).toBe(200);
-      expect(res.body.id).toBe('123456');
-      expect(res.body.username).toBe('testuser');
-      expect(res.body.accessToken).toBeUndefined();
-      expect(res.body.refreshToken).toBeUndefined();
-    });
-
-    it('should return 401 when not authenticated', async () => {
-      const app = createTestApp(null);
-
-      const res = await request(app).get('/api/user');
-
-      expect(res.status).toBe(401);
-    });
-  });
-
   describe('GET /api/activities', () => {
     it('should return list of activities', async () => {
       const app = createTestApp(mockUser);

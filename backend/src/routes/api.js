@@ -6,11 +6,6 @@ import { createActivityReportEmbed } from '../models/embed.js';
 
 const router = Router();
 
-router.get('/user', requireAuthorization, (req, res) => {
-  const { accessToken, refreshToken, ...safeUser } = req.user;
-  res.json(safeUser);
-});
-
 router.get('/activities', requireAuthorization, (req, res) => {
   res.json(getActivities());
 });

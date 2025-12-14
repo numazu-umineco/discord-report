@@ -98,7 +98,7 @@ describe('Auth Routes', () => {
       expect(res.body.error).toBe('NOT_IN_GUILD');
     });
 
-    it('should not expose tokens in response', async () => {
+    it('should not expose tokens or guilds in response', async () => {
       checkUserAccess.mockResolvedValue({ authorized: true });
 
       const app = createTestApp(mockUser);
@@ -106,6 +106,7 @@ describe('Auth Routes', () => {
 
       expect(res.body.user.accessToken).toBeUndefined();
       expect(res.body.user.refreshToken).toBeUndefined();
+      expect(res.body.user.guilds).toBeUndefined();
       expect(res.body.user.id).toBe('123456');
       expect(res.body.user.username).toBe('testuser');
     });

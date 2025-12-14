@@ -25,14 +25,19 @@ activityDate.value = defaultDate
 
 onMounted(async () => {
   try {
-    const [userResponse, activitiesResponse] = await Promise.all([
-      fetch('/api/user', { credentials: 'include' }),
+    const [statusResponse, activitiesResponse] = await Promise.all([
+      fetch('/auth/status', { credentials: 'include' }),
       fetch('/api/activities', { credentials: 'include' })
     ])
 
-    if (userResponse.ok && activitiesResponse.ok) {
-      user.value = await userResponse.json()
-      activities.value = await activitiesResponse.json()
+    if (statusResponse.ok && activitiesResponse.ok) {
+      const status = await statusResponse.json()
+      if (status.authenticated && status.authorized) {
+        user.value = status.user
+        activities.value = await activitiesResponse.json()
+      } else {
+        router.push('/')
+      }
     } else {
       router.push('/')
     }

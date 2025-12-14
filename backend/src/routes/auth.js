@@ -10,7 +10,7 @@ router.get('/status', async (req, res) => {
     return res.json({ authenticated: false });
   }
 
-  const { accessToken, refreshToken, ...safeUser } = req.user;
+  const { accessToken, refreshToken, guilds, ...safeUser } = req.user;
   const access = await checkUserAccess(req.user);
 
   res.json({
