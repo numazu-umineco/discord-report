@@ -1,26 +1,21 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 onMounted(async () => {
-  try {
-    const response = await fetch('/auth/status', {
-      credentials: 'include'
-    })
-    const data = await response.json()
+  const { authenticated, authorized, error } = await authStore.fetchStatus()
 
-    if (data.authenticated) {
-      if (data.authorized) {
-        router.replace('/dashboard')
-      } else {
-        router.replace({ path: '/unauthorized', query: { error: data.error } })
-      }
+  if (authenticated) {
+    if (authorized) {
+      router.replace('/dashboard')
     } else {
-      router.replace('/')
+      router.replace({ path: '/unauthorized', query: { error } })
     }
-  } catch (error) {
+  } else {
     router.replace('/')
   }
 })

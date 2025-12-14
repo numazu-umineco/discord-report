@@ -3,6 +3,7 @@ import Login from '../views/Login.vue'
 import AuthCallback from '../views/AuthCallback.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Unauthorized from '../views/Unauthorized.vue'
+import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
@@ -36,21 +37,22 @@ const router = createRouter({
 // Navigation guard to check authentication and authorization
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
-    try {
-      const response = await fetch('/auth/status', {
-        credentials: 'include'
-      })
-      const data = await response.json()
+    const authStore = useAuthStore()
 
-      if (!data.authenticated) {
-        next('/')
-      } else if (!data.authorized) {
-        next({ path: '/unauthorized', query: { error: data.error } })
-      } else {
-        next()
-      }
-    } catch (error) {
+    // Skip fetch if already authenticated and authorized
+    if (authStore.isReady) {
+      next()
+      return
+    }
+
+    const { authenticated, authorized, error } = await authStore.fetchStatus()
+
+    if (!authenticated) {
       next('/')
+    } else if (!authorized) {
+      next({ path: '/unauthorized', query: { error } })
+    } else {
+      next()
     }
   } else {
     next()

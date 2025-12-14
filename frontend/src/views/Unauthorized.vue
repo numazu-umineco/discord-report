@@ -1,9 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const errorCode = computed(() => route.query.error || 'UNKNOWN')
 
@@ -31,11 +33,7 @@ const currentError = computed(() => {
 })
 
 const logout = async () => {
-  try {
-    await fetch('/auth/logout', { credentials: 'include' })
-  } catch (error) {
-    // Ignore logout errors
-  }
+  await authStore.logout()
   router.push('/')
 }
 </script>

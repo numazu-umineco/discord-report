@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-const user = ref(null)
 const activities = ref([])
 const isLoading = ref(true)
 const isSubmitting = ref(false)
@@ -25,24 +26,14 @@ activityDate.value = defaultDate
 
 onMounted(async () => {
   try {
-    const [statusResponse, activitiesResponse] = await Promise.all([
-      fetch('/auth/status', { credentials: 'include' }),
-      fetch('/api/activities', { credentials: 'include' })
-    ])
-
-    if (statusResponse.ok && activitiesResponse.ok) {
-      const status = await statusResponse.json()
-      if (status.authenticated && status.authorized) {
-        user.value = status.user
-        activities.value = await activitiesResponse.json()
-      } else {
-        router.push('/')
-      }
+    const response = await fetch('/api/activities', { credentials: 'include' })
+    if (response.ok) {
+      activities.value = await response.json()
     } else {
       router.push('/')
     }
   } catch (error) {
-    console.error('Failed to fetch data:', error)
+    console.error('Failed to fetch activities:', error)
     router.push('/')
   } finally {
     isLoading.value = false
@@ -50,12 +41,8 @@ onMounted(async () => {
 })
 
 const logout = async () => {
-  try {
-    await fetch('/auth/logout', { credentials: 'include' })
-    router.push('/')
-  } catch (error) {
-    console.error('Logout failed:', error)
-  }
+  await authStore.logout()
+  router.push('/')
 }
 
 const getAvatarUrl = (user) => {
@@ -123,9 +110,9 @@ const submitPost = async () => {
   <div class="dashboard">
     <header class="header">
       <h1>Discord Report</h1>
-      <div v-if="user" class="user-info">
-        <img :src="getAvatarUrl(user)" :alt="user.username" class="avatar" />
-        <span>{{ user.username }}</span>
+      <div v-if="authStore.user" class="user-info">
+        <img :src="getAvatarUrl(authStore.user)" :alt="authStore.user.username" class="avatar" />
+        <span>{{ authStore.user.username }}</span>
         <button @click="logout" class="logout-btn">ログアウト</button>
       </div>
     </header>
