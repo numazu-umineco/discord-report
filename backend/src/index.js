@@ -4,6 +4,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy as DiscordStrategy } from 'passport-discord-auth';
 import dotenv from 'dotenv';
+import { getActivities, getActivityById, isValidActivityId } from './activities.js';
 
 dotenv.config();
 
@@ -13,7 +14,8 @@ const requiredEnvVars = [
   'DISCORD_CLIENT_SECRET',
   'DISCORD_BOT_TOKEN',
   'ALLOWED_GUILD_ID',
-  'ALLOWED_ROLE_ID'
+  'ALLOWED_ROLE_ID',
+  'POST_CHANNEL_ID'
 ];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
@@ -27,6 +29,7 @@ if (missingEnvVars.length > 0) {
 
 const ALLOWED_GUILD_ID = process.env.ALLOWED_GUILD_ID;
 const ALLOWED_ROLE_ID = process.env.ALLOWED_ROLE_ID;
+const POST_CHANNEL_ID = process.env.POST_CHANNEL_ID;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -206,6 +209,140 @@ app.get('/api/guilds', requireAuthorization, async (req, res) => {
   } catch (error) {
     console.error('Error fetching guilds:', error);
     res.status(500).json({ error: 'Failed to fetch guilds' });
+  }
+});
+
+// Get activities list
+app.get('/api/activities', requireAuthorization, (req, res) => {
+  res.json(getActivities());
+});
+
+// Clean X (Twitter) URL by removing tracking parameters
+function cleanXUrl(url) {
+  if (!url) return null;
+
+  try {
+    const urlObj = new URL(url);
+
+    // Check if it's a valid X/Twitter URL
+    if (!['twitter.com', 'x.com'].includes(urlObj.hostname)) {
+      return null;
+    }
+
+    // Remove tracking parameters
+    urlObj.search = '';
+
+    return urlObj.toString();
+  } catch {
+    return null;
+  }
+}
+
+// Format date/time for display
+function formatDateTime(date, time) {
+  const [year, month, day] = date.split('-');
+  const [hour, minute] = time.split(':');
+  return `${year}年${parseInt(month)}月${parseInt(day)}日 ${hour}:${minute}`;
+}
+
+// Get user avatar URL
+function getUserAvatarUrl(user) {
+  if (user.avatar) {
+    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+  }
+  // Default avatar based on user ID
+  return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+}
+
+// Post embed message to Discord channel
+async function postEmbedToDiscord(content, embed) {
+  const response = await fetch(`https://discord.com/api/v10/channels/${POST_CHANNEL_ID}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ content, embeds: [embed] })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to post message');
+  }
+
+  return response.json();
+}
+
+app.post('/api/posts', requireAuthorization, async (req, res) => {
+  const { activityId, date, time, participants, content, xPostUrl } = req.body;
+
+  // Validate required fields
+  if (!activityId || !isValidActivityId(activityId)) {
+    return res.status(400).json({ error: 'Valid activity is required' });
+  }
+
+  if (!date) {
+    return res.status(400).json({ error: 'Date is required' });
+  }
+
+  if (!time) {
+    return res.status(400).json({ error: 'Time is required' });
+  }
+
+  if (!participants || isNaN(parseInt(participants)) || parseInt(participants) < 0) {
+    return res.status(400).json({ error: 'Valid participant count is required' });
+  }
+
+  const activity = getActivityById(activityId);
+  const cleanedXUrl = xPostUrl ? cleanXUrl(xPostUrl) : null;
+
+  // Build embed
+  const embed = {
+    title: `${activity.name} 活動報告`,
+    color: 0x5865F2, // Discord blurple
+    fields: [
+      {
+        name: '活動日時',
+        value: formatDateTime(date, time),
+        inline: true
+      },
+      {
+        name: '活動人数',
+        value: `${participants}名`,
+        inline: true
+      }
+    ],
+    footer: {
+      text: `${req.user.username}`,
+      icon_url: getUserAvatarUrl(req.user)
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  // Add optional content field
+  if (content && content.trim()) {
+    embed.fields.push({
+      name: '活動内容',
+      value: content.trim(),
+      inline: false
+    });
+  }
+
+  // Add X post URL if valid
+  if (cleanedXUrl) {
+    embed.fields.push({
+      name: 'X (Twitter)',
+      value: cleanedXUrl,
+      inline: false
+    });
+  }
+
+  try {
+    const result = await postEmbedToDiscord('新しい活動報告が投稿されました！', embed);
+    res.json({ success: true, messageId: result.id });
+  } catch (error) {
+    console.error('Error posting message:', error);
+    res.status(500).json({ error: 'Failed to post message' });
   }
 });
 

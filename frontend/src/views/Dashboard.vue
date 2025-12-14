@@ -6,27 +6,39 @@ const router = useRouter()
 const API_URL = 'http://localhost:3000'
 
 const user = ref(null)
-const guilds = ref([])
-const selectedGuild = ref(null)
-const selectedChannel = ref(null)
-const message = ref('')
+const activities = ref([])
 const isLoading = ref(true)
+const isSubmitting = ref(false)
+const submitResult = ref(null)
+
+// Form fields
+const activityId = ref('')
+const activityDate = ref('')
+const activityTime = ref('')
+const participants = ref('')
+const content = ref('')
+const xPostUrl = ref('')
+
+// Set default date to today
+const today = new Date()
+const defaultDate = today.toISOString().split('T')[0]
+activityDate.value = defaultDate
 
 onMounted(async () => {
   try {
-    const [userResponse, guildsResponse] = await Promise.all([
+    const [userResponse, activitiesResponse] = await Promise.all([
       fetch(`${API_URL}/api/user`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/guilds`, { credentials: 'include' })
+      fetch(`${API_URL}/api/activities`, { credentials: 'include' })
     ])
 
-    if (userResponse.ok && guildsResponse.ok) {
+    if (userResponse.ok && activitiesResponse.ok) {
       user.value = await userResponse.json()
-      guilds.value = await guildsResponse.json()
+      activities.value = await activitiesResponse.json()
     } else {
       router.push('/')
     }
   } catch (error) {
-    console.error('Failed to fetch user data:', error)
+    console.error('Failed to fetch data:', error)
     router.push('/')
   } finally {
     isLoading.value = false
@@ -49,21 +61,57 @@ const getAvatarUrl = (user) => {
   return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`
 }
 
-const getGuildIconUrl = (guild) => {
-  if (guild.icon) {
-    return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
-  }
-  return null
+const isFormValid = () => {
+  return activityId.value && activityDate.value && activityTime.value && participants.value
+}
+
+const resetForm = () => {
+  activityId.value = ''
+  activityDate.value = defaultDate
+  activityTime.value = ''
+  participants.value = ''
+  content.value = ''
+  xPostUrl.value = ''
 }
 
 const submitPost = async () => {
-  if (!message.value.trim()) {
-    alert('メッセージを入力してください')
+  if (!isFormValid()) {
     return
   }
 
-  // TODO: Implement actual posting functionality
-  alert('投稿機能は次のステップで実装します')
+  isSubmitting.value = true
+  submitResult.value = null
+
+  try {
+    const response = await fetch(`${API_URL}/api/posts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        activityId: activityId.value,
+        date: activityDate.value,
+        time: activityTime.value,
+        participants: parseInt(participants.value),
+        content: content.value,
+        xPostUrl: xPostUrl.value
+      })
+    })
+
+    if (response.ok) {
+      submitResult.value = { success: true, message: '活動報告を投稿しました' }
+      resetForm()
+    } else {
+      const error = await response.json()
+      submitResult.value = { success: false, message: error.error || '投稿に失敗しました' }
+    }
+  } catch (error) {
+    console.error('Failed to submit post:', error)
+    submitResult.value = { success: false, message: '投稿に失敗しました' }
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -84,48 +132,89 @@ const submitPost = async () => {
       </div>
 
       <div v-else class="post-form">
-        <h2>新規投稿</h2>
+        <h2>活動報告</h2>
+
+        <div v-if="submitResult" class="result-message" :class="{ success: submitResult.success, error: !submitResult.success }">
+          {{ submitResult.message }}
+        </div>
 
         <div class="form-group">
-          <label>サーバーを選択</label>
-          <div class="guild-list">
-            <div
-              v-for="guild in guilds"
-              :key="guild.id"
-              class="guild-item"
-              :class="{ selected: selectedGuild?.id === guild.id }"
-              @click="selectedGuild = guild"
-            >
-              <img
-                v-if="getGuildIconUrl(guild)"
-                :src="getGuildIconUrl(guild)"
-                :alt="guild.name"
-                class="guild-icon"
-              />
-              <div v-else class="guild-icon guild-icon-placeholder">
-                {{ guild.name.charAt(0) }}
-              </div>
-              <span class="guild-name">{{ guild.name }}</span>
-            </div>
+          <label for="activity">活動名 <span class="required">*</span></label>
+          <select
+            id="activity"
+            v-model="activityId"
+            :disabled="isSubmitting"
+          >
+            <option value="" disabled>選択してください</option>
+            <option v-for="activity in activities" :key="activity.id" :value="activity.id">
+              {{ activity.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="date">活動日 <span class="required">*</span></label>
+            <input
+              type="date"
+              id="date"
+              v-model="activityDate"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="time">活動時間 <span class="required">*</span></label>
+            <input
+              type="time"
+              id="time"
+              v-model="activityTime"
+              :disabled="isSubmitting"
+            />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="message">メッセージ</label>
+          <label for="participants">活動人数 <span class="required">*</span></label>
+          <input
+            type="number"
+            id="participants"
+            v-model="participants"
+            min="0"
+            placeholder="人数を入力"
+            :disabled="isSubmitting"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="content">活動内容・連絡事項</label>
           <textarea
-            id="message"
-            v-model="message"
-            placeholder="投稿するメッセージを入力..."
-            rows="6"
+            id="content"
+            v-model="content"
+            placeholder="活動内容や連絡事項があれば入力..."
+            rows="4"
+            :disabled="isSubmitting"
           ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="xPostUrl">X (Twitter) 投稿URL</label>
+          <input
+            type="url"
+            id="xPostUrl"
+            v-model="xPostUrl"
+            placeholder="https://x.com/..."
+            :disabled="isSubmitting"
+          />
+          <p class="field-hint">活動報告のポストURLがあれば入力してください</p>
         </div>
 
         <button
           class="submit-btn"
           @click="submitPost"
-          :disabled="!selectedGuild || !message.trim()"
+          :disabled="!isFormValid() || isSubmitting"
         >
-          投稿する
+          {{ isSubmitting ? '投稿中...' : '報告を投稿する' }}
         </button>
       </div>
     </main>
@@ -180,7 +269,7 @@ const submitPost = async () => {
 }
 
 .main-content {
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -203,8 +292,32 @@ const submitPost = async () => {
   color: #333;
 }
 
+.result-message {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.result-message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.result-message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .form-group label {
@@ -214,74 +327,48 @@ const submitPost = async () => {
   color: #333;
 }
 
-.guild-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 0.5rem;
+.required {
+  color: #dc3545;
 }
 
-.guild-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  border: 2px solid #eee;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.guild-item:hover {
-  border-color: #5865F2;
-  background: #f8f9ff;
-}
-
-.guild-item.selected {
-  border-color: #5865F2;
-  background: #eef0ff;
-}
-
-.guild-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  margin-bottom: 0.5rem;
-}
-
-.guild-icon-placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #5865F2;
-  color: white;
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.guild-name {
-  font-size: 0.875rem;
-  text-align: center;
-  word-break: break-word;
-  color: #333;
-}
-
+select,
+input[type="date"],
+input[type="time"],
+input[type="number"],
+input[type="url"],
 textarea {
   width: 100%;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border: 2px solid #eee;
   border-radius: 8px;
   font-size: 1rem;
-  resize: vertical;
   font-family: inherit;
   box-sizing: border-box;
+  transition: border-color 0.2s;
 }
 
+select:focus,
+input:focus,
 textarea:focus {
   outline: none;
   border-color: #5865F2;
+}
+
+select:disabled,
+input:disabled,
+textarea:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.field-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #666;
 }
 
 .submit-btn {
