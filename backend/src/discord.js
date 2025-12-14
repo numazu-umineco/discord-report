@@ -10,6 +10,8 @@ export async function getGuildMember(guildId, accessToken) {
     }
   });
   if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error('Failed to fetch guild member:', response.status, error);
     return null;
   }
   return response.json();
