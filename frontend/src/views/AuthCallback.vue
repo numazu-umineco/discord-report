@@ -7,7 +7,7 @@ const API_URL = 'http://localhost:3000'
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/status`, {
+    const response = await fetch(`${API_URL}/auth/status`, {
       credentials: 'include'
     })
     const data = await response.json()
