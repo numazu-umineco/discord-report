@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as DiscordStrategy } from 'passport-discord-auth';
 import { config } from './config.js';
-import { getGuildMember } from './discord.js';
+import { getGuildMemberByBot } from './discord.js';
 
 // Configure passport serialization
 passport.serializeUser((user, done) => {
@@ -17,7 +17,7 @@ passport.use(new DiscordStrategy({
   clientId: config.discord.clientId,
   clientSecret: config.discord.clientSecret,
   callbackUrl: config.discord.callbackUrl,
-  scope: ['identify', 'guilds', 'guilds.members.read']
+  scope: ['identify', 'guilds']
 }, (accessToken, refreshToken, profile, done) => {
   const user = {
     id: profile.id,
@@ -40,7 +40,7 @@ export async function checkUserAccess(user) {
     return { authorized: false, error: 'NOT_IN_GUILD' };
   }
 
-  const member = await getGuildMember(config.discord.allowedGuildId, user.accessToken);
+  const member = await getGuildMemberByBot(config.discord.allowedGuildId, user.id);
   if (!member) {
     return { authorized: false, error: 'MEMBER_FETCH_FAILED' };
   }

@@ -2,11 +2,11 @@ import { config } from './config.js';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
-// Fetch user's member info for a specific guild
-export async function getGuildMember(guildId, accessToken) {
-  const response = await fetch(`${DISCORD_API_BASE}/users/@me/guilds/${guildId}/member`, {
+// Fetch guild member info using Bot token
+export async function getGuildMemberByBot(guildId, userId) {
+  const response = await fetch(`${DISCORD_API_BASE}/guilds/${guildId}/members/${userId}`, {
     headers: {
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bot ${config.discord.botToken}`
     }
   });
   if (!response.ok) {
