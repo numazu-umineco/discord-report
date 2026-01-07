@@ -121,6 +121,32 @@ describe('ActivityReportEmbed', () => {
 
       expect(embed).toBeInstanceOf(ActivityReportEmbed);
     });
+
+    it('should set image with attachment URL', () => {
+      const embed = new ActivityReportEmbed()
+        .setImage('report_123.png')
+        .build();
+
+      expect(embed.image).toEqual({
+        url: 'attachment://report_123.png'
+      });
+    });
+
+    it('should not set image when filename is null', () => {
+      const embed = new ActivityReportEmbed()
+        .setImage(null)
+        .build();
+
+      expect(embed.image).toBeUndefined();
+    });
+
+    it('should not set image when filename is undefined', () => {
+      const embed = new ActivityReportEmbed()
+        .setImage(undefined)
+        .build();
+
+      expect(embed.image).toBeUndefined();
+    });
   });
 });
 
@@ -155,5 +181,38 @@ describe('createActivityReportEmbed', () => {
     });
 
     expect(embed.fields).toHaveLength(2); // datetime, participants only
+  });
+
+  it('should create embed with image attachment', () => {
+    const embed = createActivityReportEmbed({
+      activity: { name: 'サッカー部' },
+      date: '2024-01-15',
+      timeStart: '14:30',
+      timeEnd: '16:00',
+      participants: 10,
+      content: null,
+      xPostUrl: null,
+      user: { id: '123', username: 'testuser', avatar: 'abc' },
+      imageFilename: 'report_12345.jpeg'
+    });
+
+    expect(embed.image).toEqual({
+      url: 'attachment://report_12345.jpeg'
+    });
+  });
+
+  it('should create embed without image when imageFilename is not provided', () => {
+    const embed = createActivityReportEmbed({
+      activity: { name: 'サッカー部' },
+      date: '2024-01-15',
+      timeStart: '14:30',
+      timeEnd: '16:00',
+      participants: 10,
+      content: null,
+      xPostUrl: null,
+      user: { id: '123', username: 'testuser', avatar: 'abc' }
+    });
+
+    expect(embed.image).toBeUndefined();
   });
 });

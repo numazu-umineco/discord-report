@@ -31,22 +31,59 @@ export async function getBotGuilds() {
 }
 
 // Post embed message to Discord channel
-export async function postEmbedToDiscord(content, embed) {
-  const response = await fetch(`${DISCORD_API_BASE}/channels/${config.discord.postChannelId}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bot ${config.discord.botToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ content, embeds: [embed] })
-  });
+export async function postEmbedToDiscord(content, embed, imageFile = null) {
+  const url = `${DISCORD_API_BASE}/channels/${config.discord.postChannelId}/messages`;
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to post message');
+  if (imageFile) {
+    // multipart/form-data for image attachment
+    const formData = new FormData();
+
+    const payload = {
+      content,
+      embeds: [embed],
+      attachments: [{
+        id: 0,
+        filename: imageFile.filename,
+        description: '活動報告画像'
+      }]
+    };
+    formData.append('payload_json', JSON.stringify(payload));
+
+    const blob = new Blob([imageFile.buffer], { type: imageFile.contentType });
+    formData.append('files[0]', blob, imageFile.filename);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${config.discord.botToken}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to post message with image');
+    }
+
+    return response.json();
+  } else {
+    // JSON for text-only message
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${config.discord.botToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content, embeds: [embed] })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to post message');
+    }
+
+    return response.json();
   }
-
-  return response.json();
 }
 
 // Get user avatar URL

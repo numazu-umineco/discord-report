@@ -107,7 +107,13 @@ describe('API Routes', () => {
       const app = createTestApp(mockUser);
       const res = await request(app)
         .post('/api/posts')
-        .send(validPostData);
+        .field('activityId', validPostData.activityId)
+        .field('date', validPostData.date)
+        .field('timeStart', validPostData.timeStart)
+        .field('timeEnd', validPostData.timeEnd)
+        .field('participants', validPostData.participants)
+        .field('content', validPostData.content)
+        .field('xPostUrl', validPostData.xPostUrl);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -116,7 +122,8 @@ describe('API Routes', () => {
         '新しい活動報告が投稿されました！',
         expect.objectContaining({
           title: 'サッカー部 活動報告'
-        })
+        }),
+        null
       );
     });
 
@@ -126,16 +133,47 @@ describe('API Routes', () => {
       const app = createTestApp(mockUser);
       const res = await request(app)
         .post('/api/posts')
-        .send({
-          activityId: 'soccer',
-          date: '2024-01-15',
-          timeStart: '14:30',
-          timeEnd: '16:00',
-          participants: 5
+        .field('activityId', 'soccer')
+        .field('date', '2024-01-15')
+        .field('timeStart', '14:30')
+        .field('timeEnd', '16:00')
+        .field('participants', '5');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should create post with image attachment', async () => {
+      postEmbedToDiscord.mockResolvedValue({ id: 'message-with-image' });
+
+      const app = createTestApp(mockUser);
+      const res = await request(app)
+        .post('/api/posts')
+        .field('activityId', 'soccer')
+        .field('date', '2024-01-15')
+        .field('timeStart', '14:30')
+        .field('timeEnd', '16:00')
+        .field('participants', '10')
+        .attach('image', Buffer.from('fake image data'), {
+          filename: 'test.jpg',
+          contentType: 'image/jpeg'
         });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(postEmbedToDiscord).toHaveBeenCalledWith(
+        '新しい活動報告が投稿されました！',
+        expect.objectContaining({
+          image: expect.objectContaining({
+            url: expect.stringMatching(/^attachment:\/\/report_\d+\.jpeg$/)
+          })
+        }),
+        expect.objectContaining({
+          buffer: expect.any(Buffer),
+          filename: expect.stringMatching(/^report_\d+\.jpeg$/),
+          contentType: 'image/jpeg'
+        })
+      );
     });
 
     describe('validation', () => {
@@ -143,7 +181,11 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, activityId: 'invalid' });
+          .field('activityId', 'invalid')
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', validPostData.participants);
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Valid activity is required');
@@ -153,7 +195,10 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, activityId: undefined });
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', validPostData.participants);
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Valid activity is required');
@@ -163,7 +208,10 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, date: undefined });
+          .field('activityId', validPostData.activityId)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', validPostData.participants);
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Date is required');
@@ -173,7 +221,10 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, timeStart: undefined });
+          .field('activityId', validPostData.activityId)
+          .field('date', validPostData.date)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', validPostData.participants);
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Start time is required');
@@ -183,7 +234,10 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, timeEnd: undefined });
+          .field('activityId', validPostData.activityId)
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('participants', validPostData.participants);
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('End time is required');
@@ -193,7 +247,11 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, participants: 'invalid' });
+          .field('activityId', validPostData.activityId)
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', 'invalid');
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Valid participant count is required');
@@ -203,10 +261,32 @@ describe('API Routes', () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, participants: -1 });
+          .field('activityId', validPostData.activityId)
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', '-1');
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Valid participant count is required');
+      });
+
+      it('should reject non-image files', async () => {
+        const app = createTestApp(mockUser);
+        const res = await request(app)
+          .post('/api/posts')
+          .field('activityId', validPostData.activityId)
+          .field('date', validPostData.date)
+          .field('timeStart', validPostData.timeStart)
+          .field('timeEnd', validPostData.timeEnd)
+          .field('participants', validPostData.participants)
+          .attach('image', Buffer.from('not an image'), {
+            filename: 'test.txt',
+            contentType: 'text/plain'
+          });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('画像形式が無効です');
       });
     });
 
@@ -216,7 +296,11 @@ describe('API Routes', () => {
       const app = createTestApp(mockUser);
       const res = await request(app)
         .post('/api/posts')
-        .send(validPostData);
+        .field('activityId', validPostData.activityId)
+        .field('date', validPostData.date)
+        .field('timeStart', validPostData.timeStart)
+        .field('timeEnd', validPostData.timeEnd)
+        .field('participants', validPostData.participants);
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Failed to post message');

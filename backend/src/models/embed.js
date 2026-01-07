@@ -12,6 +12,7 @@ export class ActivityReportEmbed {
     this.fields = [];
     this.footer = null;
     this.timestamp = new Date().toISOString();
+    this.image = null;
   }
 
   /**
@@ -101,17 +102,37 @@ export class ActivityReportEmbed {
   }
 
   /**
+   * Set image attachment
+   * @param {string} filename - Attachment filename
+   * @returns {ActivityReportEmbed}
+   */
+  setImage(filename) {
+    if (filename) {
+      this.image = {
+        url: `attachment://${filename}`
+      };
+    }
+    return this;
+  }
+
+  /**
    * Build the embed object for Discord API
    * @returns {object}
    */
   build() {
-    return {
+    const embed = {
       title: this.title,
       color: this.color,
       fields: this.fields,
       footer: this.footer,
       timestamp: this.timestamp
     };
+
+    if (this.image) {
+      embed.image = this.image;
+    }
+
+    return embed;
   }
 }
 
@@ -126,15 +147,17 @@ export class ActivityReportEmbed {
  * @param {string} [params.content] - Activity content
  * @param {string} [params.xPostUrl] - X post URL
  * @param {object} params.user - User object
+ * @param {string} [params.imageFilename] - Image attachment filename
  * @returns {object} - Discord embed object
  */
-export function createActivityReportEmbed({ activity, date, timeStart, timeEnd, participants, content, xPostUrl, user }) {
+export function createActivityReportEmbed({ activity, date, timeStart, timeEnd, participants, content, xPostUrl, user, imageFilename }) {
   return new ActivityReportEmbed()
     .setActivity(activity)
     .setDateTime(date, timeStart, timeEnd)
     .setParticipants(participants)
     .setContent(content)
     .setXPostUrl(xPostUrl)
+    .setImage(imageFilename)
     .setAuthor(user)
     .build();
 }

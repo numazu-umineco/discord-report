@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import AppLayout from '../components/AppLayout.vue'
@@ -10,6 +10,7 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
 import ProgressSpinner from 'primevue/progressspinner'
+import FileUpload from 'primevue/fileupload'
 
 const router = useRouter()
 const toast = useToast()
@@ -27,6 +28,10 @@ const participants = ref(null)
 const content = ref('')
 const xPostUrl = ref('')
 
+// Image upload
+const selectedImage = ref(null)
+const imagePreviewUrl = ref(null)
+
 onMounted(async () => {
   try {
     const response = await fetch('/api/activities', { credentials: 'include' })
@@ -43,6 +48,32 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(() => {
+  // Clean up preview URL to prevent memory leak
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+})
+
+const onImageSelect = (event) => {
+  const file = event.files[0]
+  if (file) {
+    selectedImage.value = file
+    if (imagePreviewUrl.value) {
+      URL.revokeObjectURL(imagePreviewUrl.value)
+    }
+    imagePreviewUrl.value = URL.createObjectURL(file)
+  }
+}
+
+const removeImage = () => {
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+  selectedImage.value = null
+  imagePreviewUrl.value = null
+}
+
 const isFormValid = () => {
   return activityId.value && activityDate.value && activityTimeStart.value && activityTimeEnd.value && participants.value !== null
 }
@@ -55,6 +86,7 @@ const resetForm = () => {
   participants.value = null
   content.value = ''
   xPostUrl.value = ''
+  removeImage()
 }
 
 const submitPost = async () => {
@@ -65,21 +97,26 @@ const submitPost = async () => {
   isSubmitting.value = true
 
   try {
+    const formData = new FormData()
+    formData.append('activityId', activityId.value)
+    formData.append('date', activityDate.value)
+    formData.append('timeStart', activityTimeStart.value)
+    formData.append('timeEnd', activityTimeEnd.value)
+    formData.append('participants', participants.value)
+    if (content.value) {
+      formData.append('content', content.value)
+    }
+    if (xPostUrl.value) {
+      formData.append('xPostUrl', xPostUrl.value)
+    }
+    if (selectedImage.value) {
+      formData.append('image', selectedImage.value)
+    }
+
     const response = await fetch('/api/posts', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       credentials: 'include',
-      body: JSON.stringify({
-        activityId: activityId.value,
-        date: activityDate.value,
-        timeStart: activityTimeStart.value,
-        timeEnd: activityTimeEnd.value,
-        participants: participants.value,
-        content: content.value,
-        xPostUrl: xPostUrl.value
-      })
+      body: formData
     })
 
     if (response.ok) {
@@ -210,6 +247,38 @@ const submitPost = async () => {
             <small class="block mt-2 text-muted">活動報告のポストURLがあれば入力してください</small>
           </div>
 
+          <div class="field col-12">
+            <label for="image">活動写真</label>
+            <div v-if="!selectedImage">
+              <FileUpload
+                mode="basic"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                :maxFileSize="8000000"
+                chooseLabel="画像を選択"
+                :auto="false"
+                customUpload
+                @select="onImageSelect"
+                :disabled="isSubmitting"
+                class="p-button-outlined"
+                severity="secondary"
+              />
+            </div>
+            <div v-else class="image-preview">
+              <img :src="imagePreviewUrl" alt="プレビュー" class="preview-img" />
+              <Button
+                icon="pi pi-times"
+                severity="secondary"
+                size="small"
+                text
+                rounded
+                @click="removeImage"
+                :disabled="isSubmitting"
+                class="remove-btn"
+              />
+            </div>
+            <small class="block mt-2 text-muted">広報写真として利用する場合があります</small>
+          </div>
+
           <div class="field col-12 mb-0">
             <Button
               label="報告を投稿する"
@@ -250,5 +319,24 @@ label {
 .time-separator {
   flex-shrink: 0;
   color: var(--p-text-muted-color);
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
 }
 </style>
