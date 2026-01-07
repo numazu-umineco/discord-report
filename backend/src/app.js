@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import morgan from 'morgan';
 import { config } from './config.js';
 import { passport } from './auth.js';
 import authRoutes from './routes/auth.js';
@@ -8,6 +9,9 @@ import apiRoutes from './routes/api.js';
 
 export function createApp() {
   const app = express();
+
+  // Request logging
+  app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 
   // Middleware
   app.use(cors({
