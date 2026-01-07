@@ -25,15 +25,16 @@ export class ActivityReportEmbed {
   }
 
   /**
-   * Set activity date and time
+   * Set activity date and time range
    * @param {string} date - Date in YYYY-MM-DD format
-   * @param {string} time - Time in HH:mm format
+   * @param {string} timeStart - Start time in HH:mm format
+   * @param {string} timeEnd - End time in HH:mm format
    * @returns {ActivityReportEmbed}
    */
-  setDateTime(date, time) {
+  setDateTime(date, timeStart, timeEnd) {
     this.fields.push({
       name: '活動日時',
-      value: formatDateTime(date, time),
+      value: formatDateTime(date, timeStart, timeEnd),
       inline: true
     });
     return this;
@@ -119,17 +120,18 @@ export class ActivityReportEmbed {
  * @param {object} params - Form data
  * @param {object} params.activity - Activity object
  * @param {string} params.date - Date in YYYY-MM-DD format
- * @param {string} params.time - Time in HH:mm format
+ * @param {string} params.timeStart - Start time in HH:mm format
+ * @param {string} params.timeEnd - End time in HH:mm format
  * @param {number|string} params.participants - Participant count
  * @param {string} [params.content] - Activity content
  * @param {string} [params.xPostUrl] - X post URL
  * @param {object} params.user - User object
  * @returns {object} - Discord embed object
  */
-export function createActivityReportEmbed({ activity, date, time, participants, content, xPostUrl, user }) {
+export function createActivityReportEmbed({ activity, date, timeStart, timeEnd, participants, content, xPostUrl, user }) {
   return new ActivityReportEmbed()
     .setActivity(activity)
-    .setDateTime(date, time)
+    .setDateTime(date, timeStart, timeEnd)
     .setParticipants(participants)
     .setContent(content)
     .setXPostUrl(xPostUrl)

@@ -94,7 +94,8 @@ describe('API Routes', () => {
     const validPostData = {
       activityId: 'soccer',
       date: '2024-01-15',
-      time: '14:30',
+      timeStart: '14:30',
+      timeEnd: '16:00',
       participants: 10,
       content: 'Test content',
       xPostUrl: 'https://x.com/user/status/123'
@@ -128,7 +129,8 @@ describe('API Routes', () => {
         .send({
           activityId: 'soccer',
           date: '2024-01-15',
-          time: '14:30',
+          timeStart: '14:30',
+          timeEnd: '16:00',
           participants: 5
         });
 
@@ -167,14 +169,24 @@ describe('API Routes', () => {
         expect(res.body.error).toBe('Date is required');
       });
 
-      it('should reject missing time', async () => {
+      it('should reject missing start time', async () => {
         const app = createTestApp(mockUser);
         const res = await request(app)
           .post('/api/posts')
-          .send({ ...validPostData, time: undefined });
+          .send({ ...validPostData, timeStart: undefined });
 
         expect(res.status).toBe(400);
-        expect(res.body.error).toBe('Time is required');
+        expect(res.body.error).toBe('Start time is required');
+      });
+
+      it('should reject missing end time', async () => {
+        const app = createTestApp(mockUser);
+        const res = await request(app)
+          .post('/api/posts')
+          .send({ ...validPostData, timeEnd: undefined });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('End time is required');
       });
 
       it('should reject invalid participants', async () => {

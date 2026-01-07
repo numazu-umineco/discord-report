@@ -11,7 +11,7 @@ router.get('/activities', requireAuthorization, (req, res) => {
 });
 
 router.post('/posts', requireAuthorization, async (req, res) => {
-  const { activityId, date, time, participants, content, xPostUrl } = req.body;
+  const { activityId, date, timeStart, timeEnd, participants, content, xPostUrl } = req.body;
 
   // Validate required fields
   if (!activityId || !isValidActivityId(activityId)) {
@@ -22,8 +22,12 @@ router.post('/posts', requireAuthorization, async (req, res) => {
     return res.status(400).json({ error: 'Date is required' });
   }
 
-  if (!time) {
-    return res.status(400).json({ error: 'Time is required' });
+  if (!timeStart) {
+    return res.status(400).json({ error: 'Start time is required' });
+  }
+
+  if (!timeEnd) {
+    return res.status(400).json({ error: 'End time is required' });
   }
 
   if (!participants || isNaN(parseInt(participants)) || parseInt(participants) < 0) {
@@ -34,7 +38,8 @@ router.post('/posts', requireAuthorization, async (req, res) => {
   const embed = createActivityReportEmbed({
     activity,
     date,
-    time,
+    timeStart,
+    timeEnd,
     participants,
     content,
     xPostUrl,

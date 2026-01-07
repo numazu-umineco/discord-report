@@ -16,14 +16,14 @@ describe('ActivityReportEmbed', () => {
       expect(embed.title).toBe('サッカー部 活動報告');
     });
 
-    it('should set datetime field', () => {
+    it('should set datetime field with time range', () => {
       const embed = new ActivityReportEmbed()
-        .setDateTime('2024-01-15', '14:30')
+        .setDateTime('2024-01-15', '14:30', '16:00')
         .build();
 
       expect(embed.fields).toContainEqual({
         name: '活動日時',
-        value: '2024年1月15日 14:30',
+        value: '2024年1月15日 14:30〜16:00',
         inline: true
       });
     });
@@ -114,7 +114,7 @@ describe('ActivityReportEmbed', () => {
     it('should support method chaining', () => {
       const embed = new ActivityReportEmbed()
         .setActivity({ name: 'テスト部' })
-        .setDateTime('2024-01-01', '10:00')
+        .setDateTime('2024-01-01', '10:00', '12:00')
         .setParticipants(5)
         .setContent('テスト')
         .setAuthor({ id: '1', username: 'user', avatar: 'av' });
@@ -129,7 +129,8 @@ describe('createActivityReportEmbed', () => {
     const embed = createActivityReportEmbed({
       activity: { name: 'サッカー部' },
       date: '2024-01-15',
-      time: '14:30',
+      timeStart: '14:30',
+      timeEnd: '16:00',
       participants: 10,
       content: '練習試合',
       xPostUrl: 'https://x.com/user/status/123',
@@ -145,7 +146,8 @@ describe('createActivityReportEmbed', () => {
     const embed = createActivityReportEmbed({
       activity: { name: 'サッカー部' },
       date: '2024-01-15',
-      time: '14:30',
+      timeStart: '14:30',
+      timeEnd: '16:00',
       participants: 10,
       content: null,
       xPostUrl: null,
