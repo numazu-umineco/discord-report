@@ -34,6 +34,12 @@ const logout = async () => {
     <main class="main-content">
       <slot />
     </main>
+
+    <footer class="py-5">
+      <div class="text-center text-muted text-sm">
+        &copy; 2023 umineco
+      </div>
+    </footer>
   </div>
 </template>
 
