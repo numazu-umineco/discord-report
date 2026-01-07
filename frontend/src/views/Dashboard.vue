@@ -124,12 +124,22 @@ const submitPost = async () => {
               id="activity"
               v-model="activityId"
               :options="activities"
-              optionLabel="name"
               optionValue="id"
               placeholder="選択してください"
               :disabled="isSubmitting"
               fluid
-            />
+            >
+              <template #value="slotProps">
+                <span v-if="slotProps.value">
+                  {{ activities.find(a => a.id === slotProps.value)?.emoji }}
+                  {{ activities.find(a => a.id === slotProps.value)?.name }}
+                </span>
+                <span v-else>{{ slotProps.placeholder }}</span>
+              </template>
+              <template #option="slotProps">
+                <span>{{ slotProps.option.emoji }} {{ slotProps.option.name }}</span>
+              </template>
+            </Select>
           </div>
 
           <div class="field col-12 md:col-6">

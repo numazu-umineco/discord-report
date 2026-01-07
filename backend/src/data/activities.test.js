@@ -31,7 +31,7 @@ describe('activities', () => {
   describe('getActivityById', () => {
     it('should return activity for valid id', () => {
       const activity = getActivityById('soccer');
-      expect(activity).toEqual({ id: 'soccer', name: 'サッカー部' });
+      expect(activity).toEqual({ id: 'soccer', name: 'サッカー部', emoji: '⚽' });
     });
 
     it('should return null for invalid id', () => {
