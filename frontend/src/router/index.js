@@ -43,9 +43,9 @@ const router = createRouter({
 
 // Navigation guard to check authentication and authorization
 router.beforeEach(async (to, from, next) => {
-  if (to.meta.requiresAuth) {
-    const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
+  if (to.meta.requiresAuth) {
     // Skip fetch if already authenticated and authorized
     if (authStore.isReady) {
       next()
@@ -58,6 +58,20 @@ router.beforeEach(async (to, from, next) => {
       next('/')
     } else if (!authorized) {
       next({ path: '/unauthorized', query: { error } })
+    } else {
+      next()
+    }
+  } else if (to.path === '/') {
+    // Redirect to /report if already authenticated and authorized
+    if (authStore.isReady) {
+      next('/report')
+      return
+    }
+
+    const { authenticated, authorized } = await authStore.fetchStatus()
+
+    if (authenticated && authorized) {
+      next('/report')
     } else {
       next()
     }
