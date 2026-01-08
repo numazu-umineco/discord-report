@@ -17,19 +17,26 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="app-layout">
-    <Toolbar class="header-toolbar">
-      <template #start>
-        <span class="app-title">Discord Report</span>
-      </template>
-      <template #end>
-        <div v-if="authStore.user" class="flex align-items-center gap-2">
-          <Avatar :image="getAvatarUrl(authStore.user)" shape="circle" />
-          <span class="hidden md:inline">{{ authStore.user.username }}</span>
-          <Button icon="pi pi-sign-out" severity="secondary" variant="outlined" size="small" @click="logout" />
-        </div>
-      </template>
-    </Toolbar>
+  <div class="app-layout flex flex-column min-h-screen px-2">
+    <div class="header-container">
+      <Toolbar class="header-toolbar px-3">
+        <template #start>
+          <h1 class="app-title text-lg font-semibold m-0">umineco-report</h1>
+        </template>
+        <template #end>
+          <div v-if="authStore.user" class="flex align-items-center gap-2">
+            <Avatar :image="getAvatarUrl(authStore.user)" shape="circle" />
+            <span class="hidden md:inline">{{ authStore.user.username }}</span>
+            <Button icon="pi pi-sign-out"
+              v-tooltip.bottom="'ログアウト'"
+              severity="secondary"
+              variant="outlined"
+              size="small"
+              @click="logout" />
+          </div>
+        </template>
+      </Toolbar>
+    </div>
 
     <main class="main-content">
       <slot />
@@ -50,10 +57,8 @@ const logout = async () => {
 }
 
 .header-toolbar {
-  border-top: none;
-  border-right: none;
-  border-left: none;
-  border-radius: 0;
+  max-width: 600px;
+  margin: 1rem auto;
   background: var(--p-surface-0);
 }
 
@@ -63,7 +68,7 @@ const logout = async () => {
 
 .main-content {
   max-width: 600px;
+  width: 100%;
   margin: 1rem auto;
-  padding: 0 0.5rem;
 }
 </style>

@@ -38,7 +38,7 @@ onMounted(async () => {
 
 <style scoped>
 .callback-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #22c4fa 0%, #0ea5e9 50%, #0284c7 100%);
 }
 
 .text-muted {

@@ -46,7 +46,7 @@ const goBack = () => {
 
 <template>
   <AppLayout>
-    <Card class="complete-card">
+    <Card class="complete-card w-full">
       <template #content>
         <div class="text-center">
           <Avatar

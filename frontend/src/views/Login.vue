@@ -11,7 +11,7 @@ const loginWithDiscord = () => {
   <div class="login-container flex justify-content-center align-items-center min-h-screen">
     <Card class="login-card">
       <template #title>
-        <div class="text-center text-2xl font-bold my-3">Discord Report</div>
+        <div class="text-center text-2xl font-bold my-3">umineco-report</div>
       </template>
       <template #content>
         <p class="text-center text-muted mb-6">作業を続行するにはログインが必要です</p>
@@ -37,7 +37,7 @@ const loginWithDiscord = () => {
 }
 
 .login-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #22c4fa 0%, #0ea5e9 50%, #0284c7 100%);
 }
 
 .text-muted {
