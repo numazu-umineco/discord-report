@@ -40,7 +40,7 @@ onMounted(() => {
 })
 
 const goBack = () => {
-  router.push('/dashboard')
+  router.push('/report')
 }
 </script>
 

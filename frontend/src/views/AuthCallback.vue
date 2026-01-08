@@ -13,7 +13,7 @@ onMounted(async () => {
 
   if (authenticated) {
     if (authorized) {
-      router.replace('/dashboard')
+      router.replace('/report')
     } else {
       router.replace({ path: '/unauthorized', query: { error } })
     }

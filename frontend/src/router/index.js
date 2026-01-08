@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import AuthCallback from '../views/AuthCallback.vue'
-import Dashboard from '../views/Dashboard.vue'
+import Report from '../views/Report.vue'
 import PostComplete from '../views/PostComplete.vue'
 import Unauthorized from '../views/Unauthorized.vue'
 import { useAuthStore } from '../stores/auth'
@@ -18,9 +18,9 @@ const routes = [
     component: AuthCallback
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard,
+    path: '/report',
+    name: 'Report',
+    component: Report,
     meta: { requiresAuth: true }
   },
   {
