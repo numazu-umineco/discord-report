@@ -31,7 +31,7 @@ router.get('/discord/callback',
 );
 
 router.get('/failed', (req, res) => {
-  res.status(401).json({ error: 'Authentication failed' });
+  res.redirect(`${config.frontendUrl}/unauthorized?error=AUTH_CANCELLED`);
 });
 
 router.get('/logout', (req, res) => {
