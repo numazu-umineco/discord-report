@@ -26,7 +26,7 @@ router.get('/discord', passport.authenticate('discord'));
 router.get('/discord/callback',
   passport.authenticate('discord', { failureRedirect: '/auth/failed' }),
   (req, res) => {
-    res.redirect(`${config.frontendUrl}/auth/callback`);
+    res.redirect(`${config.frontendUrl}/callback`);
   }
 );
 
