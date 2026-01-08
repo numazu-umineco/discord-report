@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import AppLayout from '../components/AppLayout.vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import Card from 'primevue/card'
 import Select from 'primevue/select'
 import InputNumber from 'primevue/inputnumber'
@@ -74,8 +75,72 @@ const removeImage = () => {
   imagePreviewUrl.value = null
 }
 
+const isTimeOrderValid = () => {
+  if (!activityTimeStart.value || !activityTimeEnd.value) return true
+  return activityTimeStart.value < activityTimeEnd.value
+}
+
+// Time assist button helpers
+const timeToMinutes = (time) => {
+  if (!time) return null
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+const minutesToTime = (minutes) => {
+  const h = Math.floor(minutes / 60) % 24
+  const m = minutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+const isMinusButtonDisabled = computed(() => {
+  if (!activityTimeStart.value || !activityTimeEnd.value || isSubmitting.value) {
+    return true
+  }
+  return activityTimeStart.value === activityTimeEnd.value
+})
+
+const isPlusButtonDisabled = computed(() => {
+  return !activityTimeStart.value || isSubmitting.value
+})
+
+const activityDurationText = computed(() => {
+  if (!activityTimeStart.value || !activityTimeEnd.value) return null
+  const startMinutes = timeToMinutes(activityTimeStart.value)
+  const endMinutes = timeToMinutes(activityTimeEnd.value)
+  const diff = endMinutes - startMinutes
+  if (diff <= 0) return null
+  const hours = Math.floor(diff / 60)
+  const minutes = diff % 60
+  if (hours > 0 && minutes > 0) {
+    return `${hours}時間${minutes}分`
+  } else if (hours > 0) {
+    return `${hours}時間`
+  } else {
+    return `${minutes}分`
+  }
+})
+
+const adjustEndTime = (deltaMinutes) => {
+  const startMinutes = timeToMinutes(activityTimeStart.value)
+  let endMinutes = timeToMinutes(activityTimeEnd.value)
+
+  if (endMinutes === null || endMinutes <= startMinutes) {
+    // 終了時刻が未入力または開始時刻以前の場合は開始時刻を基準にする
+    endMinutes = startMinutes + deltaMinutes
+  } else {
+    endMinutes = endMinutes + deltaMinutes
+  }
+
+  if (endMinutes < startMinutes) {
+    endMinutes = startMinutes
+  }
+
+  activityTimeEnd.value = minutesToTime(endMinutes)
+}
+
 const isFormValid = () => {
-  return activityId.value && activityDate.value && activityTimeStart.value && activityTimeEnd.value && participants.value !== null
+  return activityId.value && activityDate.value && activityTimeStart.value && activityTimeEnd.value && participants.value !== null && isTimeOrderValid()
 }
 
 const resetForm = () => {
@@ -189,15 +254,19 @@ const submitPost = async () => {
               fluid
             />
           </div>
+          <div class="hidden md:block md:col-6" />
 
-          <div class="field col-12 md:col-6">
+          <div class="col-12">
             <label>活動時間 <span class="required">*</span></label>
+          </div>
+          <div class="col-12 md:col-6 mb-2">
             <div class="time-range">
               <InputText
                 id="timeStart"
                 type="time"
                 v-model="activityTimeStart"
                 :disabled="isSubmitting"
+                :invalid="!isTimeOrderValid()"
                 fluid
               />
               <span class="time-separator">〜</span>
@@ -206,9 +275,28 @@ const submitPost = async () => {
                 type="time"
                 v-model="activityTimeEnd"
                 :disabled="isSubmitting"
+                :invalid="!isTimeOrderValid()"
                 fluid
               />
             </div>
+          </div>
+
+          <div class="col-12 md:col-6 mb-2 flex align-items-center">
+            <div class="time-assist-buttons flex gap-2">
+              <ButtonGroup>
+                <Button label="-30m" size="small" severity="secondary" outlined :disabled="isMinusButtonDisabled" @click="adjustEndTime(-30)" />
+                <Button label="+30m" size="small" severity="secondary" outlined :disabled="isPlusButtonDisabled" @click="adjustEndTime(30)" />
+              </ButtonGroup>
+              <ButtonGroup>
+                <Button label="-1h" size="small" severity="secondary" outlined :disabled="isMinusButtonDisabled" @click="adjustEndTime(-60)" />
+                <Button label="+1h" size="small" severity="secondary" outlined :disabled="isPlusButtonDisabled" @click="adjustEndTime(60)" />
+              </ButtonGroup>
+            </div>
+          </div>
+          
+          <div class="field col-12">
+            <small v-if="!isTimeOrderValid()" class="block text-error">終了時刻は開始時刻より後にしてください</small>
+            <small v-else-if="activityDurationText" class="block text-muted">合計: {{ activityDurationText }}</small>
           </div>
 
           <div class="field col-12 md:col-6">
@@ -223,6 +311,8 @@ const submitPost = async () => {
             />
           </div>
 
+          <div class="hidden md:block md:col-6" />
+
           <div class="field col-12">
             <label for="content">活動内容・連絡事項</label>
             <Textarea
@@ -230,6 +320,7 @@ const submitPost = async () => {
               v-model="content"
               rows="4"
               :disabled="isSubmitting"
+              autoResize
               fluid
             />
             <small class="block mt-2 text-muted">トラブルの予見などがあれば報告してください</small>
@@ -298,6 +389,10 @@ const submitPost = async () => {
 <style scoped>
 .text-muted {
   color: var(--p-text-muted-color);
+}
+
+.text-error {
+  color: var(--p-red-500);
 }
 
 label {
