@@ -25,7 +25,7 @@ onMounted(async () => {
 
 <template>
   <div class="callback-container flex justify-content-center align-items-center min-h-screen">
-    <Card class="w-9 md:w-3">
+    <Card class="w-9 md:w-3 p-5">
       <template #content>
         <div class="flex flex-column align-items-center gap-3">
           <ProgressSpinner strokeWidth="4" />

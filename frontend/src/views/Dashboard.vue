@@ -281,7 +281,7 @@ const submitPost = async () => {
 
           <div class="field col-12 mb-0">
             <Button
-              label="報告を投稿する"
+              label="投稿する"
               icon="pi pi-send"
               :loading="isSubmitting"
               :disabled="!isFormValid()"

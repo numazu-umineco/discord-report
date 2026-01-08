@@ -9,7 +9,7 @@ const loginWithDiscord = () => {
 
 <template>
   <div class="login-container flex justify-content-center align-items-center min-h-screen">
-    <Card class="login-card w-9 md:w-4">
+    <Card class="login-card">
       <template #title>
         <div class="text-center text-2xl font-bold my-3">Discord Report</div>
       </template>
@@ -31,6 +31,11 @@ const loginWithDiscord = () => {
 </template>
 
 <style scoped>
+.login-card {
+  width: 520px;
+  max-width: 90%;
+}
+
 .login-container {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
