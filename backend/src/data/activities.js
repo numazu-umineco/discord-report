@@ -3,21 +3,11 @@
 // The ID is used for validation, the name is displayed to users
 
 const activities = [
-  { id: 'soccer', name: 'サッカー部', emoji: '⚽' },
-  { id: 'baseball', name: '野球部', emoji: '⚾' },
-  { id: 'basketball', name: 'バスケットボール部', emoji: '🏀' },
-  { id: 'volleyball', name: 'バレーボール部', emoji: '🏐' },
-  { id: 'tennis', name: 'テニス部', emoji: '🎾' },
-  { id: 'swimming', name: '水泳部', emoji: '🏊' },
-  { id: 'track', name: '陸上部', emoji: '🏃' },
-  { id: 'kendo', name: '剣道部', emoji: '🤺' },
-  { id: 'judo', name: '柔道部', emoji: '🥋' },
-  { id: 'brass', name: '吹奏楽部', emoji: '🎺' },
-  { id: 'art', name: '美術部', emoji: '🎨' },
-  { id: 'drama', name: '演劇部', emoji: '🎭' },
-  { id: 'science', name: '科学部', emoji: '🔬' },
-  { id: 'literature', name: '文芸部', emoji: '📚' },
-  { id: 'computer', name: 'コンピュータ部', emoji: '💻' }
+  { id: 'muscle', name: '筋トレ部', emoji: '🏋️' },
+  { id: 'running', name: 'ランニング部', emoji: '🏃' },
+  { id: 'mountain', name: '登山部', emoji: '🏔️' },
+  { id: 'history', name: '歴史アドベンチャー部', emoji: '📜' },
+  { id: 'mahjong', name: '麻雀部', emoji: '🀄' },
 ];
 
 // Create a map for quick lookup by ID
