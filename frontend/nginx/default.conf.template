@@ -8,6 +8,9 @@ server {
     # Trust Cloudflare's CF-Connecting-IP header for real client IP
     real_ip_header CF-Connecting-IP;
 
+    # Allow file uploads up to 10MB (Discord limit is 8MB for free servers)
+    client_max_body_size 10m;
+
     # Static assets with hashed filenames (long-term cache)
     location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
