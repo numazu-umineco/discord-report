@@ -16,7 +16,7 @@ vi.mock('../config.js', () => ({
   config: {
     discord: {
       allowedGuildId: 'allowed-guild-123',
-      allowedRoleId: 'allowed-role-456',
+      allowedRoleIds: ['allowed-role-456'],
       postChannelId: 'channel-789'
     }
   }

@@ -22,6 +22,12 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
+// Parse comma-separated role IDs into an array
+function parseRoleIds(roleIdString) {
+  if (!roleIdString) return [];
+  return roleIdString.split(',').map(id => id.trim()).filter(id => id);
+}
+
 export const config = {
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -34,7 +40,7 @@ export const config = {
     callbackUrl: process.env.DISCORD_CALLBACK_URL || 'http://localhost:3000/auth/discord/callback',
     botToken: process.env.DISCORD_BOT_TOKEN,
     allowedGuildId: process.env.ALLOWED_GUILD_ID,
-    allowedRoleId: process.env.ALLOWED_ROLE_ID,
+    allowedRoleIds: parseRoleIds(process.env.ALLOWED_ROLE_ID),
     postChannelId: process.env.POST_CHANNEL_ID
   }
 };

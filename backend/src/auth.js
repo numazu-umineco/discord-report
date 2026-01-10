@@ -45,7 +45,7 @@ export async function checkUserAccess(user) {
     return { authorized: false, error: 'MEMBER_FETCH_FAILED' };
   }
 
-  const hasRole = member.roles.includes(config.discord.allowedRoleId);
+  const hasRole = config.discord.allowedRoleIds.some(roleId => member.roles.includes(roleId));
   if (!hasRole) {
     return { authorized: false, error: 'NO_REQUIRED_ROLE' };
   }
