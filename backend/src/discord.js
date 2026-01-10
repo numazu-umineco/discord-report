@@ -1,89 +1,90 @@
+import { Client, GatewayIntentBits, AttachmentBuilder, EmbedBuilder } from 'discord.js';
 import { config } from './config.js';
 
-const DISCORD_API_BASE = 'https://discord.com/api/v10';
+// Discord.js client instance
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds]
+});
 
-// Fetch guild member info using Bot token
-export async function getGuildMemberByBot(guildId, userId) {
-  const response = await fetch(`${DISCORD_API_BASE}/guilds/${guildId}/members/${userId}`, {
-    headers: {
-      Authorization: `Bot ${config.discord.botToken}`
-    }
+let isReady = false;
+
+// Initialize and login the bot
+export async function startDiscordBot() {
+  return new Promise((resolve, reject) => {
+    client.once('ready', () => {
+      console.log(`Discord Bot is online as ${client.user.tag}`);
+      isReady = true;
+      resolve();
+    });
+
+    client.on('error', (error) => {
+      console.error('Discord client error:', error);
+    });
+
+    client.login(config.discord.botToken).catch(reject);
   });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    console.error('Failed to fetch guild member:', response.status, error);
+}
+
+// Fetch guild member info
+export async function getGuildMemberByBot(guildId, userId) {
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const member = await guild.members.fetch(userId);
+    return {
+      user: {
+        id: member.user.id,
+        username: member.user.username,
+        avatar: member.user.avatar,
+        discriminator: member.user.discriminator,
+        global_name: member.user.globalName
+      },
+      nick: member.nickname,
+      roles: member.roles.cache.map(role => role.id)
+    };
+  } catch (error) {
+    console.error('Failed to fetch guild member:', error.message);
     return null;
   }
-  return response.json();
 }
 
 // Fetch guilds where the bot is installed
 export async function getBotGuilds() {
-  const response = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
-    headers: {
-      Authorization: `Bot ${config.discord.botToken}`
-    }
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch bot guilds');
-  }
-  return response.json();
+  const guilds = await client.guilds.fetch();
+  return guilds.map(guild => ({
+    id: guild.id,
+    name: guild.name
+  }));
 }
 
 // Post embed message to Discord channel
 export async function postEmbedToDiscord(content, embed, imageFile = null) {
-  const url = `${DISCORD_API_BASE}/channels/${config.discord.postChannelId}/messages`;
+  const channel = await client.channels.fetch(config.discord.postChannelId);
+
+  if (!channel || !channel.isTextBased()) {
+    throw new Error('Invalid channel or channel is not text-based');
+  }
+
+  const discordEmbed = new EmbedBuilder(embed);
+  const messageOptions = {
+    content,
+    embeds: [discordEmbed]
+  };
 
   if (imageFile) {
-    // multipart/form-data for image attachment
-    const formData = new FormData();
-
-    const payload = {
-      content,
-      embeds: [embed],
-      attachments: [{
-        id: 0,
-        filename: imageFile.filename,
-        description: '活動報告画像'
-      }]
-    };
-    formData.append('payload_json', JSON.stringify(payload));
-
-    const blob = new Blob([imageFile.buffer], { type: imageFile.contentType });
-    formData.append('files[0]', blob, imageFile.filename);
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${config.discord.botToken}`
-      },
-      body: formData
+    const attachment = new AttachmentBuilder(imageFile.buffer, {
+      name: imageFile.filename,
+      description: '活動報告画像'
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'Failed to post message with image');
-    }
-
-    return response.json();
-  } else {
-    // JSON for text-only message
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${config.discord.botToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ content, embeds: [embed] })
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'Failed to post message');
-    }
-
-    return response.json();
+    messageOptions.files = [attachment];
+    // Update embed to reference the attachment
+    discordEmbed.setImage(`attachment://${imageFile.filename}`);
   }
+
+  const message = await channel.send(messageOptions);
+  return {
+    id: message.id,
+    channel_id: message.channelId
+  };
 }
 
 // Get user avatar URL
@@ -92,4 +93,14 @@ export function getUserAvatarUrl(user) {
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
   }
   return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+}
+
+// Get the discord.js client instance
+export function getClient() {
+  return client;
+}
+
+// Check if bot is ready
+export function isBotReady() {
+  return isReady;
 }
