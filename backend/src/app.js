@@ -10,8 +10,19 @@ import apiRoutes from './routes/api.js';
 export function createApp() {
   const app = express();
 
+  // Trust proxy (Cloudflare, nginx, etc.)
+  // Enables correct req.protocol, req.secure, req.ip from X-Forwarded-* headers
+  app.set('trust proxy', true);
+
   // Request logging
   app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
+
+  // Cache-Control headers for CDN (Cloudflare)
+  app.use((_req, res, next) => {
+    // API and auth routes should not be cached
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    next();
+  });
 
   // Middleware
   app.use(cors({
