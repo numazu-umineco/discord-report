@@ -18,10 +18,12 @@ export class ActivityReportEmbed {
   /**
    * Set activity name
    * @param {object} activity - Activity object with name property
+   * @param {string|null} customName - Custom activity name (used when activity.isCustom is true)
    * @returns {ActivityReportEmbed}
    */
-  setActivity(activity) {
-    this.title = `${activity.name} 活動報告`;
+  setActivity(activity, customName = null) {
+    const displayName = activity.isCustom && customName ? customName : activity.name;
+    this.title = `${displayName} 活動報告`;
     return this;
   }
 
@@ -140,6 +142,7 @@ export class ActivityReportEmbed {
  * Create an activity report embed from form data
  * @param {object} params - Form data
  * @param {object} params.activity - Activity object
+ * @param {string|null} [params.customActivityName] - Custom activity name (for "other" option)
  * @param {string} params.date - Date in YYYY-MM-DD format
  * @param {string} params.timeStart - Start time in HH:mm format
  * @param {string} params.timeEnd - End time in HH:mm format
@@ -150,9 +153,9 @@ export class ActivityReportEmbed {
  * @param {string} [params.imageFilename] - Image attachment filename
  * @returns {object} - Discord embed object
  */
-export function createActivityReportEmbed({ activity, date, timeStart, timeEnd, participants, content, xPostUrl, user, imageFilename }) {
+export function createActivityReportEmbed({ activity, customActivityName, date, timeStart, timeEnd, participants, content, xPostUrl, user, imageFilename }) {
   return new ActivityReportEmbed()
-    .setActivity(activity)
+    .setActivity(activity, customActivityName)
     .setDateTime(date, timeStart, timeEnd)
     .setParticipants(participants)
     .setContent(content)

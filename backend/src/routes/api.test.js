@@ -92,7 +92,7 @@ describe('API Routes', () => {
 
   describe('POST /api/posts', () => {
     const validPostData = {
-      activityId: 'soccer',
+      activityId: 'muscle',
       date: '2024-01-15',
       timeStart: '14:30',
       timeEnd: '16:00',
@@ -121,7 +121,7 @@ describe('API Routes', () => {
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
         expect.objectContaining({
-          title: 'サッカー部 活動報告'
+          title: '筋トレ部 活動報告'
         }),
         null
       );
@@ -133,7 +133,7 @@ describe('API Routes', () => {
       const app = createTestApp(mockUser);
       const res = await request(app)
         .post('/api/posts')
-        .field('activityId', 'soccer')
+        .field('activityId', 'muscle')
         .field('date', '2024-01-15')
         .field('timeStart', '14:30')
         .field('timeEnd', '16:00')
@@ -143,13 +143,51 @@ describe('API Routes', () => {
       expect(res.body.success).toBe(true);
     });
 
+    it('should create post with custom activity name', async () => {
+      postEmbedToDiscord.mockResolvedValue({ id: 'message-custom' });
+
+      const app = createTestApp(mockUser);
+      const res = await request(app)
+        .post('/api/posts')
+        .field('activityId', 'other')
+        .field('customActivityName', 'カスタム活動')
+        .field('date', '2024-01-15')
+        .field('timeStart', '14:30')
+        .field('timeEnd', '16:00')
+        .field('participants', '5');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(postEmbedToDiscord).toHaveBeenCalledWith(
+        '新しい活動報告が投稿されました！',
+        expect.objectContaining({
+          title: 'カスタム活動 活動報告'
+        }),
+        null
+      );
+    });
+
+    it('should reject other activity without custom name', async () => {
+      const app = createTestApp(mockUser);
+      const res = await request(app)
+        .post('/api/posts')
+        .field('activityId', 'other')
+        .field('date', '2024-01-15')
+        .field('timeStart', '14:30')
+        .field('timeEnd', '16:00')
+        .field('participants', '5');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Custom activity name is required');
+    });
+
     it('should create post with image attachment', async () => {
       postEmbedToDiscord.mockResolvedValue({ id: 'message-with-image' });
 
       const app = createTestApp(mockUser);
       const res = await request(app)
         .post('/api/posts')
-        .field('activityId', 'soccer')
+        .field('activityId', 'muscle')
         .field('date', '2024-01-15')
         .field('timeStart', '14:30')
         .field('timeEnd', '16:00')

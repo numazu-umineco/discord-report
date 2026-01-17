@@ -28,11 +28,17 @@ router.get('/activities', requireAuthorization, (req, res) => {
 });
 
 router.post('/posts', requireAuthorization, upload.single('image'), async (req, res) => {
-  const { activityId, date, timeStart, timeEnd, participants, content, xPostUrl } = req.body;
+  const { activityId, customActivityName, date, timeStart, timeEnd, participants, content, xPostUrl } = req.body;
 
   // Validate required fields
   if (!activityId || !isValidActivityId(activityId)) {
     return res.status(400).json({ error: 'Valid activity is required' });
+  }
+
+  // Validate custom activity name when "other" is selected
+  const activity = getActivityById(activityId);
+  if (activity.isCustom && (!customActivityName || !customActivityName.trim())) {
+    return res.status(400).json({ error: 'Custom activity name is required' });
   }
 
   if (!date) {
@@ -58,9 +64,9 @@ router.post('/posts', requireAuthorization, upload.single('image'), async (req, 
     contentType: req.file.mimetype
   } : null;
 
-  const activity = getActivityById(activityId);
   const embed = createActivityReportEmbed({
     activity,
+    customActivityName: activity.isCustom ? customActivityName.trim() : null,
     date,
     timeStart,
     timeEnd,
