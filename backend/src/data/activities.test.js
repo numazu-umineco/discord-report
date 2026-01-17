@@ -22,16 +22,22 @@ describe('activities', () => {
     it('should include expected activities', () => {
       const activities = getActivities();
       const ids = activities.map(a => a.id);
-      expect(ids).toContain('soccer');
-      expect(ids).toContain('baseball');
-      expect(ids).toContain('basketball');
+      expect(ids).toContain('muscle');
+      expect(ids).toContain('running');
+      expect(ids).toContain('mountain');
+      expect(ids).toContain('other');
     });
   });
 
   describe('getActivityById', () => {
     it('should return activity for valid id', () => {
-      const activity = getActivityById('soccer');
-      expect(activity).toEqual({ id: 'soccer', name: 'サッカー部', emoji: '⚽' });
+      const activity = getActivityById('muscle');
+      expect(activity).toEqual({ id: 'muscle', name: '筋トレ部', emoji: '🏋️' });
+    });
+
+    it('should return custom activity with isCustom flag', () => {
+      const activity = getActivityById('other');
+      expect(activity).toEqual({ id: 'other', name: 'その他', emoji: '📝', isCustom: true });
     });
 
     it('should return null for invalid id', () => {
@@ -50,9 +56,9 @@ describe('activities', () => {
 
   describe('isValidActivityId', () => {
     it('should return true for valid activity id', () => {
-      expect(isValidActivityId('soccer')).toBe(true);
-      expect(isValidActivityId('baseball')).toBe(true);
-      expect(isValidActivityId('computer')).toBe(true);
+      expect(isValidActivityId('muscle')).toBe(true);
+      expect(isValidActivityId('running')).toBe(true);
+      expect(isValidActivityId('other')).toBe(true);
     });
 
     it('should return false for invalid activity id', () => {

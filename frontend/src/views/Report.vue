@@ -22,12 +22,19 @@ const isSubmitting = ref(false)
 
 // Form fields
 const activityId = ref(null)
+const customActivityName = ref('')
 const activityDate = ref(new Date().toISOString().split('T')[0])
 const activityTimeStart = ref('')
 const activityTimeEnd = ref('')
 const participants = ref(null)
 const content = ref('')
 const xPostUrl = ref('')
+
+// Check if selected activity requires custom name input
+const isCustomActivity = computed(() => {
+  const activity = activities.value.find(a => a.id === activityId.value)
+  return activity?.isCustom === true
+})
 
 // Image upload
 const selectedImage = ref(null)
@@ -140,11 +147,16 @@ const adjustEndTime = (deltaMinutes) => {
 }
 
 const isFormValid = () => {
-  return activityId.value && activityDate.value && activityTimeStart.value && activityTimeEnd.value && participants.value !== null && isTimeOrderValid()
+  const baseValid = activityId.value && activityDate.value && activityTimeStart.value && activityTimeEnd.value && participants.value !== null && isTimeOrderValid()
+  if (isCustomActivity.value) {
+    return baseValid && customActivityName.value.trim()
+  }
+  return baseValid
 }
 
 const resetForm = () => {
   activityId.value = null
+  customActivityName.value = ''
   activityDate.value = new Date().toISOString().split('T')[0]
   activityTimeStart.value = ''
   activityTimeEnd.value = ''
@@ -164,6 +176,9 @@ const submitPost = async () => {
   try {
     const formData = new FormData()
     formData.append('activityId', activityId.value)
+    if (isCustomActivity.value && customActivityName.value.trim()) {
+      formData.append('customActivityName', customActivityName.value.trim())
+    }
     formData.append('date', activityDate.value)
     formData.append('timeStart', activityTimeStart.value)
     formData.append('timeEnd', activityTimeEnd.value)
@@ -242,6 +257,17 @@ const submitPost = async () => {
                 <span>{{ slotProps.option.emoji }} {{ slotProps.option.name }}</span>
               </template>
             </Select>
+          </div>
+
+          <div v-if="isCustomActivity" class="field col-12">
+            <label for="customActivityName">活動名（自由入力） <span class="required">*</span></label>
+            <InputText
+              id="customActivityName"
+              v-model="customActivityName"
+              placeholder="活動名を入力してください"
+              :disabled="isSubmitting"
+              fluid
+            />
           </div>
 
           <div class="field col-12 md:col-6">

@@ -9,6 +9,7 @@ const activities = [
   { id: 'history', name: '歴史アドベンチャー部', emoji: '📜' },
   { id: 'mahjong', name: '麻雀部', emoji: '🀄' },
   { id: 'batting', name: 'バッティングセンター部', emoji: '⚾' },
+  { id: 'other', name: 'その他', emoji: '📝', isCustom: true },
 ];
 
 // Create a map for quick lookup by ID
