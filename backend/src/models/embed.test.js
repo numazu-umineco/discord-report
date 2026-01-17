@@ -8,12 +8,20 @@ vi.mock('../discord.js', () => ({
 
 describe('ActivityReportEmbed', () => {
   describe('builder pattern', () => {
-    it('should create embed with activity title', () => {
+    it('should create embed with activity title including emoji', () => {
       const embed = new ActivityReportEmbed()
-        .setActivity({ name: 'サッカー部' })
+        .setActivity({ name: '筋トレ部', emoji: '🏋️' })
         .build();
 
-      expect(embed.title).toBe('サッカー部 活動報告');
+      expect(embed.title).toBe('🏋️ 筋トレ部');
+    });
+
+    it('should create embed with custom activity name without emoji', () => {
+      const embed = new ActivityReportEmbed()
+        .setActivity({ name: 'その他', emoji: '📝', isCustom: true }, 'カスタム活動')
+        .build();
+
+      expect(embed.title).toBe('カスタム活動');
     });
 
     it('should set datetime field with time range', () => {
@@ -113,7 +121,7 @@ describe('ActivityReportEmbed', () => {
 
     it('should support method chaining', () => {
       const embed = new ActivityReportEmbed()
-        .setActivity({ name: 'テスト部' })
+        .setActivity({ name: 'テスト部', emoji: '🧪' })
         .setDateTime('2024-01-01', '10:00', '12:00')
         .setParticipants(5)
         .setContent('テスト')
@@ -153,7 +161,7 @@ describe('ActivityReportEmbed', () => {
 describe('createActivityReportEmbed', () => {
   it('should create complete embed from form data', () => {
     const embed = createActivityReportEmbed({
-      activity: { name: 'サッカー部' },
+      activity: { name: '筋トレ部', emoji: '🏋️' },
       date: '2024-01-15',
       timeStart: '14:30',
       timeEnd: '16:00',
@@ -163,14 +171,30 @@ describe('createActivityReportEmbed', () => {
       user: { id: '123', username: 'testuser', avatar: 'abc' }
     });
 
-    expect(embed.title).toBe('サッカー部 活動報告');
+    expect(embed.title).toBe('🏋️ 筋トレ部');
     expect(embed.fields).toHaveLength(4); // datetime, participants, content, x url
     expect(embed.footer.text).toBe('testuser');
   });
 
+  it('should create embed with custom activity name', () => {
+    const embed = createActivityReportEmbed({
+      activity: { name: 'その他', emoji: '📝', isCustom: true },
+      customActivityName: 'カスタム活動',
+      date: '2024-01-15',
+      timeStart: '14:30',
+      timeEnd: '16:00',
+      participants: 10,
+      content: null,
+      xPostUrl: null,
+      user: { id: '123', username: 'testuser', avatar: 'abc' }
+    });
+
+    expect(embed.title).toBe('カスタム活動');
+  });
+
   it('should create embed without optional fields', () => {
     const embed = createActivityReportEmbed({
-      activity: { name: 'サッカー部' },
+      activity: { name: '筋トレ部', emoji: '🏋️' },
       date: '2024-01-15',
       timeStart: '14:30',
       timeEnd: '16:00',
@@ -185,7 +209,7 @@ describe('createActivityReportEmbed', () => {
 
   it('should create embed with image attachment', () => {
     const embed = createActivityReportEmbed({
-      activity: { name: 'サッカー部' },
+      activity: { name: '筋トレ部', emoji: '🏋️' },
       date: '2024-01-15',
       timeStart: '14:30',
       timeEnd: '16:00',
@@ -203,7 +227,7 @@ describe('createActivityReportEmbed', () => {
 
   it('should create embed without image when imageFilename is not provided', () => {
     const embed = createActivityReportEmbed({
-      activity: { name: 'サッカー部' },
+      activity: { name: '筋トレ部', emoji: '🏋️' },
       date: '2024-01-15',
       timeStart: '14:30',
       timeEnd: '16:00',
