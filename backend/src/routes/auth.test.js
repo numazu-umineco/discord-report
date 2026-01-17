@@ -113,12 +113,12 @@ describe('Auth Routes', () => {
   });
 
   describe('GET /auth/failed', () => {
-    it('should return 401 with error message', async () => {
+    it('should redirect to unauthorized page', async () => {
       const app = createTestApp(null);
       const res = await request(app).get('/auth/failed');
 
-      expect(res.status).toBe(401);
-      expect(res.body.error).toBe('Authentication failed');
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe('http://localhost:5173/unauthorized?error=AUTH_CANCELLED');
     });
   });
 
