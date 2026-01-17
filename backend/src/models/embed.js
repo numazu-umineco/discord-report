@@ -1,6 +1,7 @@
 import { formatDateTime } from '../lib/datetime.js';
 import { cleanXUrl } from '../lib/url.js';
 import { getUserAvatarUrl } from '../discord.js';
+import { sanitizeTitle, sanitizeFieldValue } from '../lib/sanitize.js';
 
 /**
  * Activity Report Embed Builder
@@ -23,7 +24,7 @@ export class ActivityReportEmbed {
    */
   setActivity(activity, customName = null) {
     if (activity.isCustom && customName) {
-      this.title = customName;
+      this.title = sanitizeTitle(customName);
     } else {
       this.title = `${activity.emoji} ${activity.name}`;
     }
@@ -69,7 +70,7 @@ export class ActivityReportEmbed {
     if (content && content.trim()) {
       this.fields.push({
         name: '活動内容',
-        value: content.trim(),
+        value: sanitizeFieldValue(content.trim()),
         inline: false
       });
     }
