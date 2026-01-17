@@ -17,13 +17,16 @@ export class ActivityReportEmbed {
 
   /**
    * Set activity name
-   * @param {object} activity - Activity object with name property
+   * @param {object} activity - Activity object with name, emoji, and isCustom properties
    * @param {string|null} customName - Custom activity name (used when activity.isCustom is true)
    * @returns {ActivityReportEmbed}
    */
   setActivity(activity, customName = null) {
-    const displayName = activity.isCustom && customName ? customName : activity.name;
-    this.title = `${displayName} 活動報告`;
+    if (activity.isCustom && customName) {
+      this.title = customName;
+    } else {
+      this.title = `${activity.emoji} ${activity.name}`;
+    }
     return this;
   }
 

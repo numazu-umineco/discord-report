@@ -121,7 +121,7 @@ describe('API Routes', () => {
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
         expect.objectContaining({
-          title: '筋トレ部 活動報告'
+          title: '🏋️ 筋トレ部'
         }),
         null
       );
@@ -161,7 +161,7 @@ describe('API Routes', () => {
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
         expect.objectContaining({
-          title: 'カスタム活動 活動報告'
+          title: 'カスタム活動'
         }),
         null
       );
