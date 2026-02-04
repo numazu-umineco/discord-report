@@ -4,6 +4,7 @@ import { requireAuthorization } from '../auth.js';
 import { postEmbedToDiscord } from '../discord.js';
 import { getActivities, getActivityById, isValidActivityId } from '../data/activities.js';
 import { createActivityReportEmbed } from '../models/embed.js';
+import { fetchXPostMetadata, buildXPostEmbed } from '../lib/fixupx.js';
 
 const router = Router();
 
@@ -77,8 +78,23 @@ router.post('/posts', requireAuthorization, upload.single('image'), async (req, 
     imageFilename: imageFile?.filename
   });
 
+  // Build embeds array (activity report + optional X post embed)
+  const embeds = [embed];
+
+  if (xPostUrl) {
+    try {
+      const metadata = await fetchXPostMetadata(xPostUrl);
+      const xEmbeds = buildXPostEmbed(metadata);
+      if (xEmbeds) {
+        embeds.push(...xEmbeds);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch X post metadata:', error.message);
+    }
+  }
+
   try {
-    const result = await postEmbedToDiscord('新しい活動報告が投稿されました！', embed, imageFile);
+    const result = await postEmbedToDiscord('新しい活動報告が投稿されました！', embeds, imageFile);
     res.json({ success: true, messageId: result.id });
   } catch (error) {
     console.error('Error posting message:', error);

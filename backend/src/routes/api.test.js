@@ -11,6 +11,12 @@ vi.mock('../discord.js', () => ({
   getUserAvatarUrl: vi.fn((user) => `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`)
 }));
 
+// Mock fixupx
+vi.mock('../lib/fixupx.js', () => ({
+  fetchXPostMetadata: vi.fn(),
+  buildXPostEmbed: vi.fn()
+}));
+
 // Mock config
 vi.mock('../config.js', () => ({
   config: {
@@ -38,6 +44,7 @@ vi.mock('../auth.js', () => ({
 }));
 
 import { postEmbedToDiscord } from '../discord.js';
+import { fetchXPostMetadata, buildXPostEmbed } from '../lib/fixupx.js';
 import { requireAuthorization } from '../auth.js';
 
 function createTestApp(user = null) {
@@ -103,6 +110,7 @@ describe('API Routes', () => {
 
     it('should create post with valid data', async () => {
       postEmbedToDiscord.mockResolvedValue({ id: 'message-123' });
+      fetchXPostMetadata.mockResolvedValue(null);
 
       const app = createTestApp(mockUser);
       const res = await request(app)
@@ -120,9 +128,11 @@ describe('API Routes', () => {
       expect(res.body.messageId).toBe('message-123');
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
-        expect.objectContaining({
-          title: '🏋️ 筋トレ部'
-        }),
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: '🏋️ 筋トレ部'
+          })
+        ]),
         null
       );
     });
@@ -160,9 +170,11 @@ describe('API Routes', () => {
       expect(res.body.success).toBe(true);
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
-        expect.objectContaining({
-          title: 'カスタム活動'
-        }),
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: 'カスタム活動'
+          })
+        ]),
         null
       );
     });
@@ -201,11 +213,13 @@ describe('API Routes', () => {
       expect(res.body.success).toBe(true);
       expect(postEmbedToDiscord).toHaveBeenCalledWith(
         '新しい活動報告が投稿されました！',
-        expect.objectContaining({
-          image: expect.objectContaining({
-            url: expect.stringMatching(/^attachment:\/\/report_\d+\.jpeg$/)
+        expect.arrayContaining([
+          expect.objectContaining({
+            image: expect.objectContaining({
+              url: expect.stringMatching(/^attachment:\/\/report_\d+\.jpeg$/)
+            })
           })
-        }),
+        ]),
         expect.objectContaining({
           buffer: expect.any(Buffer),
           filename: expect.stringMatching(/^report_\d+\.jpeg$/),
@@ -325,6 +339,83 @@ describe('API Routes', () => {
 
         expect(res.status).toBe(400);
         expect(res.body.error).toContain('画像形式が無効です');
+      });
+    });
+
+    describe('X post embed integration', () => {
+      it('should include X post embed when metadata is available', async () => {
+        const mockXEmbeds = [
+          {
+            color: 0x1D9BF0,
+            url: 'https://x.com/testuser/status/123',
+            author: { name: 'TestUser (@testuser)' },
+            description: 'Test tweet'
+          }
+        ];
+        fetchXPostMetadata.mockResolvedValue({
+          title: 'TestUser (@testuser)',
+          description: 'Test tweet',
+          images: [],
+          originalUrl: 'https://x.com/testuser/status/123',
+          profileImageUrl: null
+        });
+        buildXPostEmbed.mockReturnValue(mockXEmbeds);
+        postEmbedToDiscord.mockResolvedValue({ id: 'message-with-x' });
+
+        const app = createTestApp(mockUser);
+        const res = await request(app)
+          .post('/api/posts')
+          .field('activityId', 'muscle')
+          .field('date', '2024-01-15')
+          .field('timeStart', '14:30')
+          .field('timeEnd', '16:00')
+          .field('participants', '5')
+          .field('xPostUrl', 'https://x.com/testuser/status/123');
+
+        expect(res.status).toBe(200);
+        const embedsArg = postEmbedToDiscord.mock.calls[0][1];
+        expect(embedsArg).toHaveLength(2);
+        expect(embedsArg[0]).toEqual(expect.objectContaining({ title: '🏋️ 筋トレ部' }));
+        expect(embedsArg[1]).toEqual(mockXEmbeds[0]);
+      });
+
+      it('should post only activity embed when fixupx fetch fails', async () => {
+        fetchXPostMetadata.mockRejectedValue(new Error('Network error'));
+        postEmbedToDiscord.mockResolvedValue({ id: 'message-no-x' });
+
+        const app = createTestApp(mockUser);
+        const res = await request(app)
+          .post('/api/posts')
+          .field('activityId', 'muscle')
+          .field('date', '2024-01-15')
+          .field('timeStart', '14:30')
+          .field('timeEnd', '16:00')
+          .field('participants', '5')
+          .field('xPostUrl', 'https://x.com/testuser/status/123');
+
+        expect(res.status).toBe(200);
+        const embedsArg = postEmbedToDiscord.mock.calls[0][1];
+        expect(embedsArg).toHaveLength(1);
+      });
+
+      it('should post only activity embed when metadata returns null', async () => {
+        fetchXPostMetadata.mockResolvedValue(null);
+        buildXPostEmbed.mockReturnValue(null);
+        postEmbedToDiscord.mockResolvedValue({ id: 'message-no-x' });
+
+        const app = createTestApp(mockUser);
+        const res = await request(app)
+          .post('/api/posts')
+          .field('activityId', 'muscle')
+          .field('date', '2024-01-15')
+          .field('timeStart', '14:30')
+          .field('timeEnd', '16:00')
+          .field('participants', '5')
+          .field('xPostUrl', 'https://x.com/testuser/status/123');
+
+        expect(res.status).toBe(200);
+        const embedsArg = postEmbedToDiscord.mock.calls[0][1];
+        expect(embedsArg).toHaveLength(1);
       });
     });
 

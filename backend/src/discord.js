@@ -57,17 +57,18 @@ export async function getBotGuilds() {
 }
 
 // Post embed message to Discord channel
-export async function postEmbedToDiscord(content, embed, imageFile = null) {
+export async function postEmbedToDiscord(content, embeds, imageFile = null) {
   const channel = await client.channels.fetch(config.discord.postChannelId);
 
   if (!channel || !channel.isTextBased()) {
     throw new Error('Invalid channel or channel is not text-based');
   }
 
-  const discordEmbed = new EmbedBuilder(embed);
+  const embedsArray = Array.isArray(embeds) ? embeds : [embeds];
+  const discordEmbeds = embedsArray.map(e => new EmbedBuilder(e));
   const messageOptions = {
     content,
-    embeds: [discordEmbed]
+    embeds: discordEmbeds
   };
 
   if (imageFile) {
@@ -76,8 +77,8 @@ export async function postEmbedToDiscord(content, embed, imageFile = null) {
       description: '活動報告画像'
     });
     messageOptions.files = [attachment];
-    // Update embed to reference the attachment
-    discordEmbed.setImage(`attachment://${imageFile.filename}`);
+    // Update the first embed (activity report) to reference the attachment
+    discordEmbeds[0].setImage(`attachment://${imageFile.filename}`);
   }
 
   const message = await channel.send(messageOptions);
