@@ -18,7 +18,7 @@ COPY frontend/ ./frontend/
 RUN npm run build --workspace=frontend
 
 # Production stage
-FROM nginx:1.30
+FROM nginx:1.30.6
 
 # Copy built files
 COPY --from=builder /app/frontend/dist /usr/share/nginx/html
